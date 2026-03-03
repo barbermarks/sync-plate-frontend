@@ -27,9 +27,11 @@ const Auth = () => {
           // Check if email confirmation is required
           if (data.user.identities && data.user.identities.length === 0) {
             setError('This email is already registered. Please log in instead.');
+            setLoading(false);
           } else {
-            // Success - the parent component will handle the redirect
-            console.log('Sign up successful');
+            // Success - show success message and parent component will handle redirect
+            setError('');
+            // Keep loading true so user sees the loading state while redirect happens
           }
         }
       } else {
@@ -39,10 +41,11 @@ const Auth = () => {
         });
 
         if (error) throw error;
+        // Keep loading true so user sees the loading state while redirect happens
       }
     } catch (error) {
-      setError(error.message);
-    } finally {
+      console.error('Auth error:', error);
+      setError(error.message || 'An error occurred. Please try again.');
       setLoading(false);
     }
   }
