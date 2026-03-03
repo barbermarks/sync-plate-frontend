@@ -64,10 +64,10 @@ const ProfileSetup = ({ userId, onComplete }) => {
     try {
       const { bmr, target } = calculateDailyCalories();
 
-      // Create user profile
+      // Create or update user profile (upsert)
       const { error: insertError } = await supabase
         .from('users')
-        .insert([{
+        .upsert([{
           id: userId,
           email: userEmail,
           name: formData.name,
@@ -78,7 +78,9 @@ const ProfileSetup = ({ userId, onComplete }) => {
           daily_calorie_target: target,
           activity_level: formData.activityLevel,
           goal: formData.goal
-        }]);
+        }], {
+          onConflict: 'id'
+        });
 
       if (insertError) throw insertError;
 
