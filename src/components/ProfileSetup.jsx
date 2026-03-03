@@ -13,6 +13,17 @@ const ProfileSetup = ({ userId, onComplete }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [userEmail, setUserEmail] = React.useState('');
+
+  React.useEffect(() => {
+    async function getUserEmail() {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        setUserEmail(user.email);
+      }
+    }
+    getUserEmail();
+  }, []);
 
   const activityLevels = {
     sedentary: { label: 'Sedentary', multiplier: 1.2, desc: 'Little or no exercise' },
@@ -58,6 +69,7 @@ const ProfileSetup = ({ userId, onComplete }) => {
         .from('users')
         .insert([{
           id: userId,
+          email: userEmail,
           name: formData.name,
           age: parseInt(formData.age),
           weight: parseFloat(formData.weight),
