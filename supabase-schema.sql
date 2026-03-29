@@ -59,6 +59,22 @@ CREATE POLICY "Users can manage their own adjustments"
 -- ============================================================
 -- Row Level Security for users table
 -- ============================================================
+CREATE OR REPLACE FUNCTION public.get_my_household_id()
+RETURNS BIGINT
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT household_id
+  FROM public.users
+  WHERE id = auth.uid()
+  LIMIT 1;
+$$;
+
+REVOKE ALL ON FUNCTION public.get_my_household_id() FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.get_my_household_id() TO authenticated;
+
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
 -- Users can read their own profile and any user in the same household
@@ -67,9 +83,9 @@ CREATE POLICY "Users can view household members"
   ON users FOR SELECT TO authenticated
   USING (
     id = auth.uid()
-    OR household_id IN (
-      SELECT household_id FROM users
-      WHERE id = auth.uid() AND household_id IS NOT NULL
+    OR (
+      household_id IS NOT NULL
+      AND household_id = public.get_my_household_id()
     )
   );
 
@@ -97,9 +113,9 @@ CREATE POLICY "Users can view own and household meals"
   ON meals FOR SELECT TO authenticated
   USING (
     user_id = auth.uid()
-    OR household_id IN (
-      SELECT household_id FROM users
-      WHERE id = auth.uid() AND household_id IS NOT NULL
+    OR (
+      household_id IS NOT NULL
+      AND household_id = public.get_my_household_id()
     )
   );
 
@@ -109,9 +125,9 @@ CREATE POLICY "Users can insert meals"
   ON meals FOR INSERT TO authenticated
   WITH CHECK (
     user_id = auth.uid()
-    OR household_id IN (
-      SELECT household_id FROM users
-      WHERE id = auth.uid() AND household_id IS NOT NULL
+    OR (
+      household_id IS NOT NULL
+      AND household_id = public.get_my_household_id()
     )
   );
 
@@ -121,9 +137,9 @@ CREATE POLICY "Users can update meals"
   ON meals FOR UPDATE TO authenticated
   USING (
     user_id = auth.uid()
-    OR household_id IN (
-      SELECT household_id FROM users
-      WHERE id = auth.uid() AND household_id IS NOT NULL
+    OR (
+      household_id IS NOT NULL
+      AND household_id = public.get_my_household_id()
     )
   );
 
@@ -133,9 +149,9 @@ CREATE POLICY "Users can delete meals"
   ON meals FOR DELETE TO authenticated
   USING (
     user_id = auth.uid()
-    OR household_id IN (
-      SELECT household_id FROM users
-      WHERE id = auth.uid() AND household_id IS NOT NULL
+    OR (
+      household_id IS NOT NULL
+      AND household_id = public.get_my_household_id()
     )
   );
 
